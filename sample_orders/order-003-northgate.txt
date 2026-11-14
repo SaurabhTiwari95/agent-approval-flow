@@ -1,0 +1,21 @@
+From: Priya Hallworth <buyer@northgate.example.com>
+To: orders@acmetraders.example.com
+Subject: Re: quote - please confirm order
+Date: Mon, 9 Nov 2026 10:05:00 +0000
+
+Morning,
+
+Following our call, please go ahead with:
+
+- 40 x SKU-00006 (glass storage jars)
+- 15 x SKU-00002 bamboo chopping boards
+- 5 x garden hose 20m (if you stock them now?)
+
+As agreed on the phone, you'll take 10% off the chopping boards and the jars
+are 5.50 each, not 6.80.
+
+Invoice date 2026-11-12 please.
+
+Regards,
+Priya Hallworth
+Northgate Hardware Co.

@@ -1,0 +1,15 @@
+From: Theo Lindqvist <orders@marigoldfinch.example.com>
+To: orders@acmetraders.example.com
+Subject: Order for the showroom refresh
+Date: Mon, 9 Nov 2026 09:40:00 +0000
+
+Hi there,
+
+Could you send us two dozen of the ceramic dinner plates, 12 wooden serving trays
+and a dozen enamel mugs? Also a few of those linen tea towel packs - let's say 8.
+
+No rush, end of the month is fine.
+
+Best,
+Theo
+Marigold & Finch Interiors

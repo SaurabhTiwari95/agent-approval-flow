@@ -1,0 +1,36 @@
+# Local stack: a one-off setup job (tables, sample catalogue, sample drafts) and the web app on
+# 127.0.0.1:8010. Settings come from .env (run: python scripts/make_env.py). Nothing is exposed beyond 127.0.0.1.
+services:
+  setup:
+    build: .
+    command: ["sh", "-c", "python -m approval setup && python -m approval ingest"]
+    env_file: .env
+    environment:
+      DATABASE_PATH: /data/approval.db
+      # Pass your key through only if you set EXTRACTOR=claude in .env; empty means offline.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - appdata:/data
+
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_PATH: /data/approval.db
+    ports:
+      - "127.0.0.1:8010:8000"
+    volumes:
+      - appdata:/data
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  appdata:

@@ -1,0 +1,18 @@
+From: Nadia Brookes <purchasing@kestrel.example.com>
+To: orders@acmetraders.example.com
+Subject: PO 4471 - restock for November
+Date: Mon, 9 Nov 2026 08:12:00 +0000
+
+Hello Acme team,
+
+Please supply the following for our Riverside store:
+
+  SKU-00001  Steel Mixing Bowl 3L        x 24
+  SKU-00003  Cast Iron Skillet 26cm      x 10
+  SKU-00010  Silicone Spatula            x 60
+
+We'd like delivery by 2026-11-16 if possible.
+
+Thanks,
+Nadia Brookes
+Purchasing, Kestrel Kitchenware

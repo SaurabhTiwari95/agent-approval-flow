@@ -1,0 +1,30 @@
+# Calls the real Claude API, so it costs money. It never runs on push: start it by hand from the
+# Actions tab. Spend is capped by EXTRACT_DAY_CAP_USD below (a few cents for one email).
+name: Live smoke test (manual, costs money)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      EXTRACTOR: claude
+      EXTRACT_DAY_CAP_USD: "0.20"
+      DATABASE_PATH: data/live.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m approval setup
+      - name: Draft two sample emails with Claude (one has a prompt-injection attempt)
+        run: python -m approval ingest sample_orders/order-002-marigold.txt sample_orders/order-005-riverside.txt
+      - run: python -m approval drafts
+      - run: python -m approval costs --days 1

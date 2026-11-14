@@ -1,0 +1,15 @@
+From: Felix Moorcroft <felix@harbourlight.example.com>
+To: orders@acmetraders.example.com
+Subject: First order
+Date: Mon, 9 Nov 2026 11:30:00 +0000
+
+Hello,
+
+We're a new cafe opening next month (Harbourlight Coffee). We'd like:
+
+SKU-00009 Enamel Mug - 48
+SKU-00008 Cotton Apron - 6
+
+Please let me know what you need to set us up as a customer.
+
+Felix Moorcroft

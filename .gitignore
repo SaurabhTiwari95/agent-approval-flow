@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local data (SQLite files)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets and local config: never commit
+.env
+*.pem
+*.key
+blocked-words.txt
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,27 @@
+[project]
+name = "agent-approval-flow"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=approval --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+omit = ["approval/__main__.py"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC"]
+ignore = ["B008"] # FastAPI's Depends()/Form() in defaults is the intended pattern
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "E501"]
+# Prompt prose: wrapping it would add line breaks the model reads.
+"approval/extractor.py" = ["E501"]
+# A local benchmark: asserts are its checks, and its password exists only in a temporary database.
+"scripts/loadtest.py" = ["S101", "S105"]

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Draft {{ d.id }}{% endblock %}
+{% block content %}
+{% set open = d.status in ("pending", "post_failed") %}
+{% set can_act = user.can_decide and open %}
+<p><a href="/drafts">&larr; All drafts</a></p>
+<h1>Draft {{ d.id }} <span class="status status-{{ d.status }}">{{ d.status.replace('_', ' ') }}</span></h1>
+{% if message %}<p class="notice ok" role="status">{{ message }}</p>{% endif %}
+{% if error %}<p class="notice bad" role="alert">{{ error }}</p>{% endif %}
+
+<p class="meta">
+  Received {{ d.created_at }} from <code>{{ d.source_name }}</code> · drafted by <code>{{ d.extracted_by }}</code>
+  (cost ${{ d.extraction_usd }}) · confidence {{ d.confidence or "-" }}
+  {% if open %} · expires {{ d.expires_at }} (in {{ remaining(d.expires_at) }}){% endif %}
+</p>
+{% if d.status == "posted" %}
+<p class="notice ok">Posted as <strong>{{ d.posted_ref }}</strong> at {{ d.posted_at }}, under the name of <strong>{{ names.get(d.decided_by, d.decided_by) }}</strong> ({{ d.decided_by }}).</p>
+{% elif d.status == "rejected" %}
+<p class="notice">Rejected by <strong>{{ d.decided_by }}</strong> at {{ d.decided_at }}: {{ d.reject_reason }}</p>
+{% elif d.status == "post_failed" %}
+<p class="notice bad">Approved by <strong>{{ d.decided_by }}</strong>, but posting failed (<code>{{ d.last_error }}</code>). Approving again retries safely: it can never post twice.</p>
+{% endif %}
+
+<div class="split">
+  <section class="card">
+    <h2>Original email</h2>
+    <pre class="email">{{ d.email_text }}</pre>
+  </section>
+
+  <section class="card">
+    <h2>Proposed invoice</h2>
+    <dl class="kv">
+      <dt>Customer</dt><dd>{% if d.customer %}{{ d.customer.name }} <small>{{ d.customer.email }}</small>{% else %}<span class="warn-text">not matched</span>{% endif %}</dd>
+      <dt>Requested date</dt><dd>{{ d.requested_date or "-" }}</dd>
+    </dl>
+    <div class="scroll"><table class="lines">
+      <thead><tr><th>SKU</th><th>Product</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Line total</th></tr></thead>
+      <tbody>
+        {% for ln in d.lines %}
+        <tr><td>{{ ln.sku }}</td><td>{{ ln.name }}</td><td class="num">{{ ln.quantity }}</td>
+          <td class="num">{{ ln.unit_price }}</td><td class="num">{{ ln.line_total }}</td></tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">No lines yet.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><th colspan="4" class="num">Total</th><th class="num">{{ d.total }}</th></tr></tfoot>
+    </table></div>
+    <p class="hint">Prices come from Acme Traders' price list, never from the agent or the email.
+      Per-draft ceiling: {{ settings.max_draft_total }}{% if user.limit %}; your limit: {{ user.limit }}{% endif %}.</p>
+
+    {% if d.problems or d.notes %}
+    <h3>What the agent flagged</h3>
+    <ul class="flags">
+      {% for p in d.problems %}<li class="warn-text">{{ p.message }}</li>{% endfor %}
+      {% for n in d.notes %}<li>{{ n }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if can_act %}
+      {% if blockers %}
+      <h3>Before it can be approved</h3>
+      <ul class="flags">{% for b in blockers %}<li class="bad-text">{{ b }}</li>{% endfor %}</ul>
+      {% endif %}
+      <div class="actions">
+        <form method="post" action="/drafts/{{ d.id }}/approve">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="version" value="{{ d.version }}">
+          <button type="submit" class="primary" {% if blockers %}disabled{% endif %}>
+            {% if d.status == "post_failed" %}Retry posting{% else %}Approve and post as {{ user.name }}{% endif %}
+          </button>
+        </form>
+        <form method="post" action="/drafts/{{ d.id }}/reject" class="reject">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="version" value="{{ d.version }}">
+          <label>Reason <input name="reason" required minlength="3" maxlength="500" placeholder="Why not?"></label>
+          <button type="submit" class="danger">Reject</button>
+        </form>
+      </div>
+    {% elif open and not user.can_decide %}
+      <p class="hint">You can view drafts. Only approvers can change, approve or reject them.</p>
+    {% endif %}
+  </section>
+</div>
+
+{% if can_act and d.status == "pending" %}
+<section class="card">
+  <h2>Edit the draft</h2>
+  <form method="post" action="/drafts/{{ d.id }}/edit" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="version" value="{{ d.version }}">
+    <label>Customer
+      <select name="customer_id">
+        <option value="">(choose)</option>
+        {% for c in customers %}<option value="{{ c.id }}" {% if c.id == d.customer_id %}selected{% endif %}>{{ c.name }} ({{ c.email }})</option>{% endfor %}
+      </select>
+    </label>
+    <div class="scroll"><table class="lines">
+      <thead><tr><th>Product</th><th class="num">Quantity (0 removes)</th></tr></thead>
+      <tbody>
+        {% for ln in d.lines %}
+        <tr><td><select name="sku"><option value="">(none)</option>
+          {% for p in products %}<option value="{{ p.sku }}" {% if p.sku == ln.sku %}selected{% endif %}>{{ p.sku }} {{ p.name }} ({{ p.unit_price }})</option>{% endfor %}
+        </select></td>
+        <td class="num"><input name="qty" value="{{ ln.quantity }}" inputmode="numeric" pattern="[0-9]*" maxlength="7" size="7"></td></tr>
+        {% endfor %}
+        {% for _ in spare_rows %}
+        <tr><td><select name="sku"><option value="">(add a product)</option>
+          {% for p in products %}<option value="{{ p.sku }}">{{ p.sku }} {{ p.name }} ({{ p.unit_price }})</option>{% endfor %}
+        </select></td>
+        <td class="num"><input name="qty" value="" inputmode="numeric" pattern="[0-9]*" maxlength="7" size="7"></td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <button type="submit">Save changes</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Audit trail</h2>
+  <div class="scroll"><table class="list">
+    <thead><tr><th>When (UTC)</th><th>Event</th><th>By</th><th>Detail</th></tr></thead>
+    <tbody>
+      {% for a in trail %}
+      <tr><td>{{ a.at }}</td><td><code>{{ a.event }}</code></td><td>{{ a.actor }}</td>
+        <td><small>{% for k, v in a.detail.items() %}{{ k }}: {% if v is sequence and v is not string %}{{ v | join(', ') or '-' }}{% else %}{{ v }}{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</small></td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Drafts{% endblock %}
+{% block content %}
+<h1>Draft invoices</h1>
+<nav class="tabs" aria-label="Filter by status">
+  {% for st in statuses %}
+  <a href="/drafts?status={{ st }}" {% if st == status %}aria-current="page"{% endif %}>{{ st.replace('_', ' ') }}</a>
+  {% endfor %}
+</nav>
+{% if rows %}
+<div class="scroll"><table class="list">
+  <thead>
+    <tr><th>#</th><th>From email</th><th>Customer</th><th class="num">Lines</th><th class="num">Total</th>
+      <th>Confidence</th><th>Problems</th><th>Status</th><th>Expires in</th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><a href="/drafts/{{ r.id }}">{{ r.id }}</a></td>
+      <td><a href="/drafts/{{ r.id }}">{{ r.source_name }}</a></td>
+      <td>{{ r.customer or "not matched" }}</td>
+      <td class="num">{{ r.lines }}</td>
+      <td class="num">{{ r.total }}</td>
+      <td>{{ r.confidence or "-" }}</td>
+      <td>{% if r.problems %}<span class="pill warn">{{ r.problems }}</span>{% else %}-{% endif %}</td>
+      <td><span class="status status-{{ r.status }}">{{ r.status.replace('_', ' ') }}</span>
+        {% if r.posted_ref %}<small>{{ r.posted_ref }}</small>{% endif %}</td>
+      <td>{% if r.status in ("pending", "post_failed") %}{{ remaining(r.expires_at) }}{% else %}-{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<p class="empty">No drafts here.</p>
+{% endif %}
+<nav class="pager" aria-label="Pages">
+  {% if page_no > 1 %}<a href="/drafts?status={{ status }}&amp;page_no={{ page_no - 1 }}">Previous</a>{% endif %}
+  <span>Page {{ page_no }}</span>
+  {% if has_next %}<a href="/drafts?status={{ status }}&amp;page_no={{ page_no + 1 }}">Next</a>{% endif %}
+</nav>
+{% endblock %}
